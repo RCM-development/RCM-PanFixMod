@@ -359,7 +359,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RC_testing_mod-master\TestMod.csproj">
+    <ProjectReference Include="..\..\RC_testing_mod-master\TestMod.csproj">
       <Project>{a6cde29a-0229-4c93-a425-090bfdd1043d}</Project>
       <Name>TestMod</Name>
     </ProjectReference>
