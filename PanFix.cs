@@ -46,26 +46,46 @@ namespace RCM_PanFix{
 
 
         // this patch prevents time slowing from affecting camera speed
-        [HarmonyPatch(typeof(Scrolling), "Translate")]
-        public static class Scrolling_Translate_RTSMiddleMousePatch{
-            [HarmonyPrefix]
-            public static bool Prefix(Scrolling __instance, Vector3 translation){
+        //[HarmonyPatch(typeof(Scrolling), "Translate")]
+        //public static class Scrolling_Translate_RTSMiddleMousePatch{
+        //    [HarmonyPrefix]
+        //    public static bool Prefix(Scrolling __instance, Vector3 translation){
                 
-                if (!(translation == Vector3.zero)){
-                    Vector3 vector = Quaternion.Euler(0f, __instance.transform.rotation.eulerAngles.y, 0f) * translation;
-                    Vector3 vector2 = __instance.UnrotatedPosition();
-                    Vector3 vector3 = vector2 + translation;
-                    if ((!(vector3.x > vector2.x) || !(vector2.x > __instance._sqrt2 * 0.5f * __instance._grid.WorldWidth)) && (!(vector3.x < vector2.x) 
-                    || !(vector2.x < (0f - __instance._sqrt2) * 0.5f * __instance._grid.WorldWidth)) && (!(vector3.z > vector2.z) 
-                    || !(vector2.z > __instance._sqrt2 * 0.5f * __instance._grid.WorldHeight)) && (!(vector3.z < vector2.z) || !(vector2.z < (0f - __instance._sqrt2) * 0.5f * __instance._grid.WorldHeight)))
-                    {
-                        __instance.transform.Translate(vector * Time.unscaledDeltaTime, Space.World);
-                    }
+        //        if (!(translation == Vector3.zero)){
+        //            Vector3 vector = Quaternion.Euler(0f, __instance.transform.rotation.eulerAngles.y, 0f) * translation;
+        //            Vector3 vector2 = __instance.UnrotatedPosition();
+        //            Vector3 vector3 = vector2 + translation;
+        //            if ((!(vector3.x > vector2.x) || !(vector2.x > __instance._sqrt2 * 0.5f * __instance._grid.WorldWidth)) && (!(vector3.x < vector2.x) 
+        //            || !(vector2.x < (0f - __instance._sqrt2) * 0.5f * __instance._grid.WorldWidth)) && (!(vector3.z > vector2.z) 
+        //            || !(vector2.z > __instance._sqrt2 * 0.5f * __instance._grid.WorldHeight)) && (!(vector3.z < vector2.z) || !(vector2.z < (0f - __instance._sqrt2) * 0.5f * __instance._grid.WorldHeight)))
+        //            {
+        //                __instance.transform.Translate(vector * Time.unscaledDeltaTime, Space.World);
+        //            }
+        //        }
+        //        return false;
+        //    }
+        //}
+       static void ApplyCamMovement(Scrolling __instance, Vector3 translation){
+            if (!(translation == Vector3.zero))
+            {
+                Vector3 vector = Quaternion.Euler(0f, __instance.transform.rotation.eulerAngles.y, 0f) * translation;
+                Vector3 vector2 = __instance.UnrotatedPosition();
+                Vector3 vector3 = vector2 + translation;
+                if ((!(vector3.x > vector2.x) || !(vector2.x > __instance._sqrt2 * 0.5f * __instance._grid.WorldWidth)) && (!(vector3.x < vector2.x)
+                || !(vector2.x < (0f - __instance._sqrt2) * 0.5f * __instance._grid.WorldWidth)) && (!(vector3.z > vector2.z)
+                || !(vector2.z > __instance._sqrt2 * 0.5f * __instance._grid.WorldHeight)) && (!(vector3.z < vector2.z) || !(vector2.z < (0f - __instance._sqrt2) * 0.5f * __instance._grid.WorldHeight)))
+                {
+                    __instance.transform.Translate(vector, Space.World);
                 }
-                return false;
             }
         }
-
+        Vector3 GetWorldPointUnderCursor(Camera cam)
+        {
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            Plane ground = new Plane(Vector3.up, Vector3.zero); // y=0 plane
+            ground.Raycast(ray, out float dist);
+            return ray.GetPoint(dist);
+        }
 
 
         [HarmonyPatch(typeof(Scrolling), "Update")]
@@ -219,7 +239,7 @@ namespace RCM_PanFix{
                     if (camHeight <= 0f) camHeight = 1f; // safety
 
                     // Scale converts pixel delta (per frame) into world units for this frame.
-                    float scale = (camHeight / (float)Screen.height) * 30f;
+                    float scale = (camHeight / (float)Screen.height);
 
                     // Convert delta to world movement for this frame
                     Vector3 movement = new Vector3(pixelDelta.x * scale, 0f, pixelDelta.y * scale);
@@ -232,7 +252,7 @@ namespace RCM_PanFix{
                     if (Game.Options.InvertMiddleClickPan) movement = -movement;
 
                     // Apply movement immediately (camera follows drag)
-                    __instance.Translate(-movement);
+                    ApplyCamMovement(__instance, -movement);
 
 
 
@@ -271,7 +291,7 @@ namespace RCM_PanFix{
 
 
                         // Move camera opposite to velocity so fling direction matches drag direction
-                        __instance.Translate(-_inertiaVelocity);
+                        ApplyCamMovement(__instance, -_inertiaVelocity);
 
                         // Exponential damping time constant (seconds). Smaller = stops faster.
                         const float INERTIA_DAMP_TIME = 0.2f; // tune 0.2 - 0.6
@@ -327,7 +347,7 @@ namespace RCM_PanFix{
                 if (zero != Vector3.zero){
                     if (CardTooltip.IsShowing_Static()) CardTooltip.HideTooltipForOneFrame_Static();
 
-                    __instance.Translate(zero);
+                    ApplyCamMovement(__instance, zero);
 
                     if (!flag2 && !__instance._borderScrollingSentToTutorialController){
                         TutorialController.AddUsedInput_Static(HasUsedCertainInputCondition.Input.ScrollingViaBorder);
