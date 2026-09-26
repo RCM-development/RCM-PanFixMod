@@ -27,7 +27,10 @@ namespace RCM_PanFix{
                 RCMModUI mod = t.Result;
 
                 // begin mod UI construction here...
-                mod.CreateLabelField("panning patched enabled");
+                mod.CreateLabelField("zoom+ & panning patched");
+                mod.CreateLabelField("config settings->controls");
+                mod.CreateLabelField("set screen edge panning off");
+                mod.CreateLabelField("set full res if fullscreen");
 
 
             }, TaskScheduler.FromCurrentSynchronizationContext());
